@@ -33,16 +33,18 @@ endif
 let g:vmp_osname = 'Unidentified'
 
 if has('win32')
-  " Not yet used
   let g:vmp_osname = 'win32'
+  let g:tmp_file = '%TEMP%\vim-markdown-preview.html'
 endif
 if has('unix')
   let g:vmp_osname = 'unix'
+  let g:tmp_file = '/tmp/vim-markdown-preview.html'
 endif
 if has('mac')
   let g:vmp_osname = 'mac'
   let g:vmp_search_script = g:vmp_script_path . '/applescript/search-for-vmp.scpt'
   let g:vmp_activate_script = g:vmp_script_path . '/applescript/activate-vmp.scpt'
+  let g:tmp_file = '/tmp/vim-markdown-preview.html'
 endif
 
 
@@ -51,18 +53,18 @@ function! Vim_Markdown_Preview()
   let b:curr_file = expand('%:p')
 
   if g:vim_markdown_preview_github == 1
-    call system('grip "' . b:curr_file . '" --export /tmp/vim-markdown-preview.html --title vim-markdown-preview.html')
+    call system('grip "' . b:curr_file . '" --export "' . g:tmp_file . '" --title vim-markdown-preview.html')
   else
-    call system('markdown "' . b:curr_file . '" > /tmp/vim-markdown-preview.html')
+    call system('markdown "' . b:curr_file . '" > "' . g:tmp_file . '"')
   endif
 
   if g:vmp_osname == 'unix'
     let chrome_wid = system("xdotool search --name 'vim-markdown-preview.html - " . g:vim_markdown_preview_browser . "'")
     if !chrome_wid
       if g:vim_markdown_preview_use_xdg_open == 1
-        call system('xdg-open /tmp/vim-markdown-preview.html &> /dev/null &')
+        call system('xdg-open "' . g:tmp_file . '" &> /dev/null &')
       else
-        call system('see /tmp/vim-markdown-preview.html &> /dev/null &')
+        call system('see "' . g:tmp_file . '" &> /dev/null &')
       endif
     else
       let curr_wid = system('xdotool getwindowfocus')
@@ -77,18 +79,22 @@ function! Vim_Markdown_Preview()
     if g:vim_markdown_preview_browser == "Google Chrome"
       let b:vmp_preview_in_browser = system('osascript ' . g:vmp_search_script)
       if b:vmp_preview_in_browser == 1
-        call system('open -g /tmp/vim-markdown-preview.html')
+        call system('open -g "' . g:tmp_file . '"')
       else
         call system('osascript ' . g:vmp_activate_script)
       endif
     else
-      call system('open -g /tmp/vim-markdown-preview.html')
+      call system('open -g "' . g:tmp_file . '"')
     endif
+  endif
+
+  if g:vmp_osname == 'win32'
+      call system('"' . g:tmp_file . '"')
   endif
 
   if g:vim_markdown_preview_temp_file == 1
     sleep 200m
-    call system('rm /tmp/vim-markdown-preview.html')
+    call system('rm "' . g:tmp_file . '"')
   endif
 endfunction
 
@@ -133,6 +139,10 @@ function! Vim_Markdown_Preview_Local()
     endif
   endif
 
+  if g:vmp_osname == 'win32'
+      call system('vim-markdown-preview.html')
+  end-if
+ 
   if g:vim_markdown_preview_temp_file == 1
     sleep 200m
     call system('rm vim-markdown-preview.html')
